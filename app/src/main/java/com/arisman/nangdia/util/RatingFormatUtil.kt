@@ -13,8 +13,7 @@ object RatingFormatUtil {
 
     fun getNormalizedScore(rating: MediaRating): Int? {
         val source = normalizeSource(rating.source)
-        val tenPointScale = rating.score ?: rating.value
-        val hundredPointScale = rating.score ?: rating.value
+        val scoreOrValue = rating.score ?: rating.value
         val metacriticUserValue = rating.value ?: rating.score?.let { score ->
             when {
                 score <= 10.0 -> score
@@ -24,14 +23,14 @@ object RatingFormatUtil {
 
         val normalized = when {
             source.contains("metacriticuser") -> metacriticUserValue?.times(10)
-            source.contains("imdb") -> tenPointScale?.times(10)
-            source.contains("tmdb") -> tenPointScale?.times(10)
-            source.contains("trakt") -> tenPointScale?.times(10)
-            source.contains("myanimelist") || source == "mal" -> tenPointScale?.times(10)
-            source.contains("letterboxd") -> tenPointScale?.times(20)
-            source.contains("metacritic") -> normalizeHundredScale(hundredPointScale)
+            source.contains("imdb") -> normalizeHundredScale(scoreOrValue)
+            source.contains("tmdb") -> normalizeHundredScale(scoreOrValue)
+            source.contains("trakt") -> normalizeHundredScale(scoreOrValue)
+            source.contains("myanimelist") || source == "mal" -> normalizeHundredScale(scoreOrValue)
+            source.contains("letterboxd") -> normalizeLetterboxdScale(scoreOrValue)
+            source.contains("metacritic") -> normalizeHundredScale(scoreOrValue)
             source.contains("rotten") || source.contains("tomatoes") || source == "rt" || source.contains("popcorn") || source.contains("audience") ->
-                normalizeHundredScale(hundredPointScale)
+                normalizeHundredScale(scoreOrValue)
             rating.score != null -> normalizeUnknownScale(rating.score)
             rating.value != null -> normalizeUnknownScale(rating.value)
             else -> null
@@ -60,22 +59,31 @@ object RatingFormatUtil {
 
     fun getFormattedRating(rating: MediaRating): String {
         val source = normalizeSource(rating.source)
-        val metacriticUserValue = rating.value ?: rating.score?.let { score ->
+        val originalValue = rating.value
+        val metacriticUserValue = originalValue ?: rating.score?.let { score ->
             when {
                 score <= 10.0 -> score
                 else -> score / 10.0
             }
         }
-        val value = rating.value ?: rating.score
+        // Use value (original source scale) when available; fall back to score normalized to source scale
+        val displayValue = originalValue ?: rating.score?.let { score ->
+            when {
+                source.contains("letterboxd") -> if (score <= 5.0) score else if (score <= 10.0) score else score / 20.0
+                source.contains("imdb") || source.contains("tmdb") || source.contains("trakt") || source.contains("myanimelist") || source.contains("mal") ->
+                    if (score <= 10.0) score else score / 10.0
+                else -> score
+            }
+        }
         return when {
             source.contains("metacriticuser") -> metacriticUserValue?.let { "${trimTrailingZero(it)}/10" } ?: "N/A"
-            source.contains("imdb") -> "${value ?: "N/A"}/10"
-            source.contains("tmdb") -> "${value ?: "N/A"}/10"
-            source.contains("letterboxd") -> "${value ?: "N/A"}/5"
-            source.contains("metacritic") -> "${value?.toInt() ?: "N/A"}/100"
-            source.contains("trakt") -> "${value ?: "N/A"}/10"
-            source.contains("myanimelist") || source.contains("mal") -> "${value ?: "N/A"}/10"
-            source.contains("rotten") || source.contains("rt") -> "${value?.toInt() ?: "N/A"}%"
+            source.contains("imdb") -> "${displayValue?.let { trimTrailingZero(it) } ?: "N/A"}/10"
+            source.contains("tmdb") -> "${displayValue?.let { trimTrailingZero(it) } ?: "N/A"}/10"
+            source.contains("letterboxd") -> "${displayValue?.let { trimTrailingZero(it) } ?: "N/A"}/5"
+            source.contains("metacritic") -> "${displayValue?.toInt() ?: "N/A"}/100"
+            source.contains("trakt") -> "${displayValue?.let { trimTrailingZero(it) } ?: "N/A"}/10"
+            source.contains("myanimelist") || source.contains("mal") -> "${displayValue?.let { trimTrailingZero(it) } ?: "N/A"}/10"
+            source.contains("rotten") || source.contains("rt") -> "${displayValue?.toInt() ?: "N/A"}%"
             else -> getNormalizedScore(rating)?.let { "$it%" } ?: "N/A"
         }
     }
@@ -142,6 +150,15 @@ object RatingFormatUtil {
     private fun normalizeHundredScale(value: Double?): Double? {
         return when {
             value == null -> null
+            value <= 10.0 -> value * 10
+            else -> value
+        }
+    }
+
+    private fun normalizeLetterboxdScale(value: Double?): Double? {
+        return when {
+            value == null -> null
+            value <= 5.0 -> value * 20
             value <= 10.0 -> value * 10
             else -> value
         }
