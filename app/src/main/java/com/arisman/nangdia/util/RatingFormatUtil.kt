@@ -98,15 +98,18 @@ object RatingFormatUtil {
         
         val titleQuery = detail.title.replace(" ", "%20")
         return when {
-            source.contains("imdb") && !detail.imdbId.isNullOrEmpty() -> 
+            source.contains("imdb") && !detail.imdbId.isNullOrEmpty() ->
                 "https://www.imdb.com/title/${detail.imdbId}/"
-            source.contains("tmdb") && detail.tmdbId != null -> 
+            source.contains("tmdb") && detail.tmdbId != null ->
                 "https://www.themoviedb.org/${detail.mediaType}/${detail.tmdbId}"
-            source.contains("trakt") && !detail.imdbId.isNullOrEmpty() -> 
+            source.contains("trakt") && !detail.imdbId.isNullOrEmpty() ->
                 "https://trakt.tv/search/imdb/${detail.imdbId}"
             source.contains("letterboxd") && !detail.imdbId.isNullOrEmpty() ->
                 "https://letterboxd.com/imdb/${detail.imdbId}"
-            source.contains("rotten") || source.contains("rt") || source.contains("tomatoes") || source.contains("popcorn") || source.contains("audience") -> 
+            // NOTE: Must check rogerebert BEFORE rt, because "ebert" ends with "rt"
+            source.contains("rogerebert") ->
+                "https://www.rogerebert.com/search?q=$titleQuery"
+            source.contains("rotten") || source.contains("rt") || source.contains("tomatoes") || source.contains("popcorn") || source.contains("audience") ->
                 if (!detail.rtSlug.isNullOrEmpty()) {
                     val mediaBase = if (detail.mediaType == "show" || detail.mediaType == "tv") "tv" else "m"
                     "https://www.rottentomatoes.com/$mediaBase/${detail.rtSlug}"
@@ -131,12 +134,13 @@ object RatingFormatUtil {
             lowerSource.contains("metacriticuser") -> "MC User"
             lowerSource.contains("metacritic") -> "MC"
             lowerSource == "popcorn" || lowerSource.contains("tomatoesaudience") || lowerSource.contains("rottentomatoesaudience") -> "Popcorn"
+            // NOTE: Must check rogerebert BEFORE rt, because "ebert" ends with "rt"
+            lowerSource.contains("rogerebert") -> "Ebert"
             lowerSource.contains("rotten") || lowerSource.contains("tomatoes") || lowerSource.contains("rt") -> "Tomato"
             lowerSource.contains("imdb") -> "IMDb"
             lowerSource.contains("tmdb") || lowerSource.contains("themoviedb") -> "TMDB"
             lowerSource.contains("letterboxd") -> "LBxD"
             lowerSource.contains("trakt") -> "Trakt"
-            lowerSource.contains("rogerebert") -> "Ebert"
             lowerSource.contains("myanimelist") || lowerSource.contains("mal") -> "MAL"
             lowerSource.contains("mdblist") -> "MdbL"
             else -> source.take(6).uppercase()

@@ -70,4 +70,18 @@ class RatingFormatUtilTest {
 
         assertEquals("7.4/10", RatingFormatUtil.getFormattedRating(rating))
     }
+
+    @Test
+    fun `shortenSourceName returns Ebert for Roger Ebert not Tomato`() {
+        assertEquals("Ebert", RatingFormatUtil.shortenSourceName("Roger Ebert"))
+        assertEquals("Ebert", RatingFormatUtil.shortenSourceName("RogerEbert"))
+        assertEquals("Ebert", RatingFormatUtil.shortenSourceName("rogerebert"))
+    }
+
+    @Test
+    fun `shortenSourceName returns Tomato for Rotten Tomatoes`() {
+        assertEquals("Tomato", RatingFormatUtil.shortenSourceName("Rotten Tomatoes"))
+        assertEquals("Tomato", RatingFormatUtil.shortenSourceName("RottenTomatoes"))
+        assertEquals("Tomato", RatingFormatUtil.shortenSourceName("RT"))
+    }
 }
