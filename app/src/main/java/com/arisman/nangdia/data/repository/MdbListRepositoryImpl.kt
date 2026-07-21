@@ -202,7 +202,7 @@ class MdbListRepositoryImpl @Inject constructor(
         emit(Resource.Loading())
         val response = remoteDataSource.getMdbListItems(
             username = "snoak",
-            slug = "imdb-most-popular-movies"
+            slug = "todays-most-popular-movies"
         )
         when (response) {
             is Resource.Success -> {
@@ -220,7 +220,7 @@ class MdbListRepositoryImpl @Inject constructor(
         emit(Resource.Loading())
         val response = remoteDataSource.getMdbListItems(
             username = "snoak",
-            slug = "imdb-most-popular-shows"
+            slug = "trakt-s-trending-shows"
         )
         when (response) {
             is Resource.Success -> {
