@@ -71,6 +71,21 @@ This project requires API keys from:
 - [TMDB](https://www.themoviedb.org/settings/api) — for movie/TV metadata
 - [MDBList](https://mdblist.com/) — for ratings and external links
 
+### MDBList List Dependencies
+
+Halaman **Home** menggunakan list dari user MDBList [`snoak`](https://mdblist.com/lists/snoak/) yang di-*hardcode* di [`MdbListRepositoryImpl.kt`](app/src/main/java/com/arisman/nangdia/data/repository/MdbListRepositoryImpl.kt):
+
+| Halaman | Slug List |
+|---------|-----------|
+| Popular Movies | `todays-most-popular-movies` |
+| Popular TV Shows | `trakt-s-trending-shows` |
+
+Jika list tersebut dihapus atau diganti nama oleh pemiliknya, halaman Home akan menampilkan error **404**. Periksa ketersediaan list dengan mengakses:
+
+```
+https://mdblist.com/lists/snoak/{slug}
+```
+
 ## License
 
 This project is for personal/educational use. Please respect the terms of service of TMDB and MDBList when using this app.
